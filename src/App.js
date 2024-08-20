@@ -1,24 +1,28 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // mui
-import { Box, Container } from '@mui/material';
+import { Container } from '@mui/material';
 
 // pages
 import Settings from './pages/Settings';
 import Question from './pages/Question';
 import FinalScreen from './pages/FinalScreen';
+import MainLayout from './layouts/MainLayout';
+import Leaderboard from './pages/Leaderboard';
+
+// styles
+import './index.css'
 
 function App() {
   return (
    <BrowserRouter>
-    <Container maxWidth="sm">
-      <Box mt={5}>
-        <Routes>
-          <Route path='/' element={<Settings />} />
-          <Route path='/question' element={<Question />} />
-          <Route path='/score' element={<FinalScreen />} />
-        </Routes>
-      </Box>
+    <Container maxWidth="md">
+      <Routes>
+        <Route path='/' element={<MainLayout><Settings /></MainLayout>} />
+        <Route path='/question' element={<MainLayout><Question /></MainLayout>} />
+        <Route path='/score' element={<MainLayout><FinalScreen /></MainLayout>} />
+        <Route path='/leaderboard' element={<MainLayout><Leaderboard /></MainLayout>} />
+      </Routes>
     </Container>
    </BrowserRouter>
   );

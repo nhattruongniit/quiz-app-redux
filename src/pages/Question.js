@@ -13,6 +13,12 @@ const getRandomInt = (max) => {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
+const timeout = {
+  hard: 20,
+  medium: 30,
+  easy: 60,
+};
+
 function Question() {
   const {  
     question_category,
@@ -23,6 +29,7 @@ function Question() {
   } = useSelector(state => state.question);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [timer, setTimer] = React.useState(timeout[question_difficulty]);
 
   let apiUrl = `/api.php?amount=${amount_of_question}`;
 
@@ -40,6 +47,7 @@ function Question() {
   const [questionIndex, setQuestionIndex] = React.useState(0);
   const [options, setOptions] = React.useState([]);
 
+  // show anwser
   React.useEffect(() => {
     if(response?.results.length) {
       const questions = response.results[questionIndex];
@@ -49,19 +57,16 @@ function Question() {
     }
   }, [response, questionIndex])
 
-  console.log({options})
-
-
-  if(loading) {
-    return (
-      <Box mt={20} textAlign="center">
-        <CircularProgress />
-      </Box>
-    )
-  }
 
   const handleAnswer = (e) => {
-    const question = response.results[questionIndex];
+    const question = response?.results?.[questionIndex];
+
+    // next question when end time
+    if(!question) {
+      setQuestionIndex(prevState => prevState + 1)
+      return;
+    }
+
     if(e.target.textContent === question.correct_answer) {
       dispatch(handleChangeScore(score + 1))
     }
@@ -73,11 +78,44 @@ function Question() {
     }
   }
 
+  // countdown
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTimer((prev) => {
+        if (prev > 0) {
+          return prev - 1;
+        } else {
+          handleAnswer();
+          return timeout[question_difficulty];
+        }
+      });
+    }, 1000);
+    return () => clearInterval(intervalId);
+
+    // eslint-disable-next-line
+  }, [question_difficulty]);
+
+
+  if(loading) {
+    return (
+      <Box mt={20} textAlign="center">
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+   // Function to format timer
+  const formatTimer = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
   return (
     <Box>
       <Typography variant="h4" textAlign="center">Question {questionIndex + 1}</Typography>
       <Typography mt={5}>
-        {decode(response.results[questionIndex].question)}
+        {decode(response?.results?.[questionIndex].question)}
       </Typography>
 
       {options.map((name, index) => (
@@ -86,8 +124,13 @@ function Question() {
         </Box>
       ))}
     
-      <Box mt={5}>
-        Score: {score} / {response?.results.length}
+      <Box mt={5} display="flex" alignItems="center" justifyContent="space-between">
+        <span>Score: {score} / {response?.results.length}</span>
+        <span
+          className={`${timer < 10 ? 'animate-pulse-fast text-red-600' : ''}`}
+        >
+          Timer: {formatTimer(timer)}
+        </span>
       </Box>
     </Box>
   )
